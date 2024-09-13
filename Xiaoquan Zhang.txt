@@ -1,0 +1,79 @@
+let target;
+let agent1;
+let agent2;
+
+class Agent {
+  constructor(x, y) {
+    this.position = createVector(x, y);
+    this.velocity = createVector(0, 0);
+    this.acceleration = createVector(0, 0);
+    this.sight_range = 100;
+  }
+
+  arriveToTargetInRange(vec_target) {
+    let d = p5.Vector.sub(vec_target, this.position);
+    let dist = d.mag();
+    if (dist <= this.sight_range) {
+      const max_speed = 0.5;
+      const energy = dist / this.sight_range;
+      const speed = energy * max_speed;
+      d.normalize().mult(speed);
+      this.acceleration.add(d);
+    } else {
+      const drag = p5.Vector.mult(this.velocity, -1);
+      this.acceleration.add(drag);
+    }
+  }
+
+  fleeFromTarget(vec_target) {
+    let d = p5.Vector.sub(this.position, vec_target);
+    let dist = d.mag();
+    if (dist <= this.sight_range) {
+      d.normalize().mult(0.5); 
+      this.acceleration.add(d);
+    } else {
+      const drag = p5.Vector.mult(this.velocity, -1);
+      this.acceleration.add(drag);
+    }
+  }
+
+  update() {
+    this.velocity = p5.Vector.add(this.velocity, this.acceleration);
+    this.velocity.mult(0.5); // Applying drag force
+    this.velocity.limit(1);
+    this.position = p5.Vector.add(this.position, this.velocity);
+    this.acceleration.set(0, 0);
+  }
+
+  render() {
+    fill(1);
+    circle(this.position.x, this.position.y, 10);
+    noFill();
+    circle(this.position.x, this.position.y, this.sight_range * 2);
+  }
+}
+
+function setup() {
+  createCanvas(400, 400);
+  agent1 = new Agent(100, 100);
+  agent2 = new Agent(200, 150);
+  target = createVector(300, 300);
+}
+
+function draw() {
+  background(220);
+  agent1.arriveToTargetInRange(target); 
+  agent1.update();
+  agent1.render();
+
+  agent2.fleeFromTarget(target); 
+  agent2.update();
+  agent2.render();
+
+  circle(target.x, target.y, 10);
+}
+
+function mousePressed() {
+  target.x = mouseX;
+  target.y = mouseY;
+}
